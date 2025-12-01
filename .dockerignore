@@ -1,0 +1,16 @@
+node_modules
+build
+dist
+.git
+.env
+frontend_app.err
+frontend_app.log
+ml_app.err
+ml_app.log
+seed.err
+seed.log
+server.err
+server.log
+npm-debug.log
+Dockerfile
+.dockerignore
