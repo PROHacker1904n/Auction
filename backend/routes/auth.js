@@ -1,27 +1,20 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
+// import nodemailer from "nodemailer"; // No longer needed
 import User from "../models/user.js";
 import PasswordReset from "../models/passwordReset.js";
+import { Resend } from 'resend'; // Import Resend
 
 const router = express.Router();
 
 // Helper function to send email
 const sendEmail = async (email, otp) => {
   try {
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true, // Use SSL
-      auth: {
-        user: process.env.EMAIL_USER, // Your Gmail address
-        pass: process.env.EMAIL_PASS  // Your Gmail App Password
-      }
-    });
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER, // Sender address, usually your Gmail
+    const resend = new Resend(process.env.RESEND_API_KEY); // Initialize Resend with API key inside the function
+    // Nodemailer transporter replaced by Resend API call
+    const { data, error } = await resend.emails.send({
+      from: 'onboarding@resend.dev', // Use Resend's testing domain
       to: email,
       subject: 'Password Reset OTP',
       html: `
@@ -33,12 +26,15 @@ const sendEmail = async (email, otp) => {
           <p>If you didn't request this, please ignore this email.</p>
         </div>
       `,
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
-    console.log("Email sent via Gmail to:", email);
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    console.log("Email sent via Resend to:", email, "Data:", data);
   } catch (error) {
-    console.error("Gmail Email Service Error:", error);
+    console.error("Resend Email Service Error:", error);
     throw new Error("Failed to send email");
   }
 };

@@ -1,7 +1,9 @@
+import dotenv from "dotenv";
+dotenv.config(); // Load env vars immediately
+
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import cron from "node-cron";
 import Listing from "./models/listing.js";
 import Notification from "./models/notification.js";
@@ -28,7 +30,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config();
 const MONGO_URI = process.env.ATLASDB || "mongodb://localhost:27017/auction-app"
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy to ensure correct IP resolution for rate limiting
