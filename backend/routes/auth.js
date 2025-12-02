@@ -132,7 +132,7 @@ router.post("/forgot-password", async (req, res) => {
     try {
       await sendEmail(email, otp);
     } catch (emailErr) {
-      console.log("Email sending failed (likely Resend free tier limit). Proceeding anyway for testing.");
+      console.error("Email sending failed:", emailErr);
     }
 
     res.json({ message: "OTP sent to your email" });
