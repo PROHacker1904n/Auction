@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/api';
 import {
@@ -109,6 +109,11 @@ const Login = () => {
             <Button type="submit" disabled={loading}>
               {loading ? 'Logging in...' : 'Login'}
             </Button>
+            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+              <Link to="/forgot-password" style={{ color: '#007bff', textDecoration: 'none' }}>
+                Forgot Password?
+              </Link>
+            </div>
           </Form>
         </>
       ) : (

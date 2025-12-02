@@ -31,6 +31,7 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 const MONGO_URI = process.env.ATLASDB || "mongodb://localhost:27017/auction-app"
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy to ensure correct IP resolution for rate limiting
 
 // Basic security middleware
 app.use((req, res, next) => {

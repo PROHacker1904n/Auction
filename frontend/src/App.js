@@ -5,6 +5,7 @@ import { GlobalStyle, AppContainer } from './styles/GlobalStyles';
 import Layout from './components/Layout';
 import Home from './components/Home';
 import Login from './components/Login';
+import ForgotPassword from './components/ForgotPassword';
 import Listings from './components/Listings';
 import AddListing from './components/AddListing';
 import EditListing from './components/EditListing';
@@ -23,6 +24,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/listings" element={<Listings />} />
               <Route path="/add-listing" element={<AddListing />} />
               <Route path="/edit-listing/:id" element={<EditListing />} />

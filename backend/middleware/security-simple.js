@@ -20,7 +20,7 @@ export const generalLimiter = createRateLimit(
 
 // Strict rate limiter for auth endpoints
 export const authLimiter = createRateLimit(
-  15 * 60 * 1000, // 15 minutes
+  60 * 1000, // 1 minute
   5, // limit each IP to 5 requests per windowMs
   'Too many authentication attempts, please try again later.'
 );

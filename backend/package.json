@@ -9,6 +9,7 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "cros": "^1.1.0",
@@ -23,6 +24,8 @@
     "mongoose": "^8.19.1",
     "node-cron": "^4.2.1",
     "node-fetch": "^3.3.2",
+    "nodemailer": "^7.0.11",
+    "resend": "^6.5.2",
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {
