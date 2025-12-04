@@ -11,7 +11,7 @@ async function getFallbackListings() {
   return Listing.find({ status: 'active' })
     .sort({ bidCount: -1, endTime: 1 }) 
     .limit(8)
-    .populate('seller', 'username rating');
+    .populate('seller', 'name rating');
 }
 
 // Get recommendations for a user
@@ -45,7 +45,7 @@ router.get('/:userId', async (req, res) => {
           const recommendations = await Listing.find({ 
             _id: { $in: recommendedIds },
             status: 'active' 
-          }).populate('seller', 'username rating'); 
+          }).populate('seller', 'name rating'); 
           
           // If after filtering for active status we have no items, use fallback
           if (recommendations.length === 0) {
