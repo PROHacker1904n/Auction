@@ -3,3 +3,4 @@ pymongo
 scikit-learn
 pandas
 python-dotenv
+gunicorn

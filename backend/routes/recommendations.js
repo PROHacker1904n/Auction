@@ -11,7 +11,8 @@ router.get('/:userId', async (req, res) => {
     const { userId } = req.params;
 
     // Call the Python ML service
-    const mlServiceResponse = await fetch(`http://127.0.0.1:5001/recommendations/${userId}`);
+    const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://127.0.0.1:5001';
+    const mlServiceResponse = await fetch(`${mlServiceUrl}/recommendations/${userId}`);
     if (!mlServiceResponse.ok) {
       throw new Error(`ML service responded with status ${mlServiceResponse.status}`);
     }
