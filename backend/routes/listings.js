@@ -1,24 +1,16 @@
 import express from "express";
 import Listing from "../models/listing.js";
 import auth from '../middleware/auth.js';
-import { mockListings } from "../data/mockData.js";
 
 const router = express.Router();
 
 // Get all listings
 router.get("/", async (req, res) => {
   try {
-    // Try to get listings from MongoDB, fallback to mock data if connection fails
-    let listings;
-    try {
-      listings = await Listing.find({ status: 'active' })
-        .populate("seller", "name")
-        .populate("highestBidder", "name")
-        .populate("winner", "name");
-    } catch (dbError) {
-      console.log("Database connection failed, using mock data:", dbError.message);
-      listings = mockListings;
-    }
+    const listings = await Listing.find({ status: 'active' })
+      .populate("seller", "name")
+      .populate("highestBidder", "name")
+      .populate("winner", "name");
     
     // Custom sort logic to prioritize active auctions
     const statusOrder = { 'active': 1, 'pending': 2, 'ended': 3 };
@@ -35,8 +27,7 @@ router.get("/", async (req, res) => {
     res.json(listings);
   } catch (err) {
     console.error("Error fetching listings:", err);
-    // Fallback to mock data on any error
-    res.json(mockListings);
+    res.status(500).json({ message: "Server error fetching listings" });
   }
 });
 
@@ -82,28 +73,19 @@ router.get("/popular", async (req, res) => {
 // Get a single listing
 router.get("/:id", async (req, res) => {
   try {
-    let listing;
-    try {
-      listing = await Listing.findById(req.params.id)
-        .populate("seller", "name")
-        .populate("highestBidder", "name")
-        .populate("winner", "name");
-    } catch (dbError) {
-      console.log("Database connection failed, using mock data");
-      listing = mockListings.find(l => l._id === req.params.id);
-    }
+    const listing = await Listing.findById(req.params.id)
+      .populate("seller", "name")
+      .populate("highestBidder", "name")
+      .populate("winner", "name");
     
     if (!listing) return res.status(404).json({ message: "Listing not found" });
     res.json(listing);
   } catch (err) {
     console.error("Error fetching listing:", err);
-    // Fallback to mock data
-    const mockListing = mockListings.find(l => l._id === req.params.id);
-    if (mockListing) {
-      res.json(mockListing);
-    } else {
-      res.status(404).json({ message: "Listing not found" });
+    if (err.kind === 'ObjectId') {
+        return res.status(404).json({ message: "Listing not found" });
     }
+    res.status(500).json({ message: "Server error fetching listing" });
   }
 });
 

@@ -82,13 +82,12 @@ const Recommendations = ({ layout = 'scroll' }) => {
 
   useEffect(() => {
     const fetchRecommendations = async () => {
-      if (user) {
-        try {
-          const response = await api.get(`/recommendations/${user._id}`);
-          setRecommendations(response);
-        } catch (error) {
-          console.error('Error fetching recommendations:', error);
-        }
+      try {
+        const userId = user ? user._id : 'guest';
+        const response = await api.get(`/recommendations/${userId}`);
+        setRecommendations(response);
+      } catch (error) {
+        console.error('Error fetching recommendations:', error);
       }
     };
 

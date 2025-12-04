@@ -139,3 +139,6 @@ dist
 **/.env
 .gemini/
 *.err
+tasks.md
+backend/ml-service/debug_log.txt
+backend/ml-service/error_log.txt

@@ -1,5 +1,8 @@
-Flask
+flask
+flask-cors
 pymongo
-scikit-learn
 pandas
+numpy
+scikit-learn
 python-dotenv
+requests

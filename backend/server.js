@@ -30,9 +30,22 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const MONGO_URI = process.env.ATLASDB || "mongodb://localhost:27017/auction-app"
+const MONGO_URI = process.env.ATLASDB;
+
+if (!MONGO_URI) {
+  console.error("❌ Error: ATLASDB environment variable is not defined.");
+  process.exit(1);
+}
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy to ensure correct IP resolution for rate limiting
+
+// CORS configuration - Allow React app
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Basic security middleware
 app.use((req, res, next) => {
@@ -65,14 +78,6 @@ app.use((req, res, next) => {
 // Rate limiting
 app.use(generalLimiter);
 
-// CORS configuration
-// CORS configuration - Allow React app
-app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -84,7 +89,7 @@ mongoose
   .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => console.error("❌ DB Connection Error:", err));
 
-app.get("/", (req, res) => {
+app.get("/api/health", (req, res) => {
   res.send("Intelligent Auction Platform API is running...");
 });
 
