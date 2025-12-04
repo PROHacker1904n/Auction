@@ -96,7 +96,12 @@ const Recommendations = ({ layout = 'scroll' }) => {
   }, [user]);
 
   if (!recommendations.length) {
-    return null;
+    return (
+      <RecommendationsContainer>
+        <h2>Recommended for you</h2>
+        <p>No recommendations available at the moment. Explore other listings!</p>
+      </RecommendationsContainer>
+    );
   }
 
   return (
