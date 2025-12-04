@@ -76,7 +76,7 @@ const ListingCard = styled.div`
   }
 `;
 
-const Recommendations = ({ layout = 'scroll' }) => {
+const Recommendations = ({ layout = 'scroll', categoryId, currentListingId }) => {
   const [recommendations, setRecommendations] = useState([]);
   const { user } = useAuth();
 
@@ -84,7 +84,17 @@ const Recommendations = ({ layout = 'scroll' }) => {
     const fetchRecommendations = async () => {
       try {
         const userId = user ? user._id : 'guest';
-        const response = await api.get(`/recommendations/${userId}`);
+        let url = `/recommendations/${userId}`;
+        
+        const params = new URLSearchParams();
+        if (categoryId) params.append('category', categoryId);
+        if (currentListingId) params.append('listingId', currentListingId);
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+
+        const response = await api.get(url);
         setRecommendations(response);
       } catch (error) {
         console.error('Error fetching recommendations:', error);
@@ -92,7 +102,7 @@ const Recommendations = ({ layout = 'scroll' }) => {
     };
 
     fetchRecommendations();
-  }, [user]);
+  }, [user, categoryId, currentListingId]);
 
   if (!recommendations.length) {
     return (

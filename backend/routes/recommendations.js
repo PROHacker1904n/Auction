@@ -2,71 +2,95 @@
 import express from 'express';
 import fetch from 'node-fetch';
 import Listing from '../models/listing.js';
+import User from '../models/user.js';
 
 const router = express.Router();
 
-async function getFallbackListings() {
-  // Combined logic for "Popular" (high interest) and "Live" (active)
-  // Sort by bidCount descending (popular) and endTime ascending (ending soon)
-  return Listing.find({ status: 'active' })
+// Helper to fetch fallback listings
+async function getFallbackListings(limit = 8, excludeId = null) {
+  const query = { status: 'active' };
+  if (excludeId) {
+    query._id = { $ne: excludeId };
+  }
+  return Listing.find(query)
     .sort({ bidCount: -1, endTime: 1 }) 
-    .limit(8)
+    .limit(limit)
     .populate('seller', 'name rating');
 }
 
-// Get recommendations for a user
+// Get recommendations
 router.get('/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
+    const { category, listingId } = req.query; // Get category and current listing ID from query params
 
-    // 1. Handle Guest / No User (Used for everyone now as a temporary fix)
-    // if (userId === 'guest' || userId === 'undefined' || userId === 'null') {
-       const fallback = await getFallbackListings();
-       return res.json(fallback);
-    // }
+    let recommendations = [];
 
-    /* 
-    // 2. Call the Python ML service for logged-in users
-    const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://127.0.0.1:5001';
-    try {
-        const mlServiceResponse = await fetch(`${mlServiceUrl}/recommend/${userId}`);
-        
-        if (mlServiceResponse.ok) {
-          const recommendationsData = await mlServiceResponse.json();
-          // Extract IDs from the ML service response
-          const recommendedIds = recommendationsData.map(item => item._id);
-          
-          // If ML service returns empty list (Cold Start), use fallback
-          if (recommendedIds.length === 0) {
-             const fallback = await getFallbackListings();
-             return res.json(fallback);
-          }
+    // 1. Context-Aware Recommendation (e.g., on a specific Auction page)
+    if (category) {
+      const query = { 
+        status: 'active', 
+        category: category 
+      };
+      if (listingId) {
+        query._id = { $ne: listingId }; // Exclude current listing
+      }
 
-          // Fetch full listing details for recommended IDs
-          const recommendations = await Listing.find({ 
-            _id: { $in: recommendedIds },
-            status: 'active' 
-          }).populate('seller', 'name rating'); 
-          
-          // If after filtering for active status we have no items, use fallback
-          if (recommendations.length === 0) {
-             const fallback = await getFallbackListings();
-             return res.json(fallback);
-          }
-
-          return res.json(recommendations);
-        } else {
-           console.warn(`ML Service unavailable or error: ${mlServiceResponse.status}`);
-           const fallback = await getFallbackListings();
-           return res.json(fallback);
-        }
-    } catch (fetchError) {
-        console.error('Error calling ML service:', fetchError);
-        // Fallback on connection error
-        const fallback = await getFallbackListings();
-        return res.json(fallback);
+      recommendations = await Listing.find(query)
+        .sort({ bidCount: -1, endTime: 1 })
+        .limit(8)
+        .populate('seller', 'name rating');
+      
+      // If not enough category items, fill with fallbacks
+      if (recommendations.length < 8) {
+         const excludeIds = [listingId, ...recommendations.map(r => r._id)].filter(Boolean);
+         const fillers = await getFallbackListings(8 - recommendations.length, excludeIds);
+         // getFallbackListings doesn't accept array for exclude, so let's simple fetch extra and filter in memory or adjust query
+         // For simplicity, just fetching popular ones ignoring duplicates check strictly for fill
+         const extra = await Listing.find({ status: 'active', _id: { $nin: excludeIds } })
+            .sort({ bidCount: -1 })
+            .limit(8 - recommendations.length)
+            .populate('seller', 'name rating');
+         
+         recommendations = [...recommendations, ...extra];
+      }
+      
+      return res.json(recommendations);
     }
-    */
+
+    // 2. User-Based Recommendation (Gender)
+    if (userId && userId !== 'guest' && userId !== 'undefined' && userId !== 'null') {
+      const user = await User.findById(userId);
+
+      if (user && (user.gender === 'male' || user.gender === 'female')) {
+        // Fetch items targeting specific gender + 'all'
+        // Prioritize specific gender matches
+        const genderQuery = {
+            status: 'active',
+            $or: [
+                { targetGender: user.gender },
+                { targetGender: 'all' }
+            ]
+        };
+
+        recommendations = await Listing.find(genderQuery)
+            .sort({ bidCount: -1, endTime: 1 }) // Sort by popularity/urgency
+            .limit(8)
+            .populate('seller', 'name rating');
+        
+        // Custom sorting to put exact gender match first if needed? 
+        // MongoDB sort doesn't easily do "value match first", but we can do it in application logic if strict ordering needed.
+        // For now, standard sort is fine as long as filtered correctly.
+        
+        if (recommendations.length > 0) {
+            return res.json(recommendations);
+        }
+      }
+    }
+
+    // 3. Fallback / Guest
+    const fallback = await getFallbackListings();
+    return res.json(fallback);
 
   } catch (error) {
     console.error('Error getting recommendations:', error);

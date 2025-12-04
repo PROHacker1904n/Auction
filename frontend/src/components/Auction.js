@@ -363,7 +363,10 @@ const Auction = () => {
       </BidLogContainer>
       
       <RecommendationsWrapper>
-        <Recommendations />
+        <Recommendations 
+            categoryId={listing.category} 
+            currentListingId={id} 
+        />
       </RecommendationsWrapper>
     </AuctionContainer>
   );
