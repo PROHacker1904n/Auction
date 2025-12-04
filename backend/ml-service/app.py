@@ -54,6 +54,21 @@ model_cache = {
     "last_updated": 0
 }
 
+def get_popular_listings(limit=5):
+    """
+    Fallback strategy: Fetch active listings sorted by bid count and view count.
+    """
+    try:
+        # Find listings that are active, sort by popularity (bids then views)
+        cursor = db.listings.find(
+            {'status': 'active'}
+        ).sort([('bidCount', -1), ('viewCount', -1)]).limit(limit)
+        
+        return [str(doc['_id']) for doc in cursor]
+    except Exception as e:
+        logger.error(f"Error fetching popular listings: {e}")
+        return []
+
 def fetch_data():
     """
     Fetches data from MongoDB and prepares DataFrames.
@@ -283,9 +298,29 @@ def recommend(user_id):
         if model_cache["content_df"] is None:
             build_models()
             
-        # Check if user exists/valid
-        # For simplicity, if user not in interaction matrix, we treat as Cold Start
-        
+        # Cold Start: If user not in interaction matrix, return popular listings
+        if model_cache["user_item_matrix"] is None or user_id not in model_cache["user_item_matrix"].index:
+            logger.info(f"Cold start for user {user_id}. Returning popular listings.")
+            # Fetch details for popular listings
+            popular_ids = get_popular_listings()
+            response_data = []
+            if popular_ids:
+                listings_df = model_cache["content_df"]
+                for lid in popular_ids:
+                    try:
+                        item_details = listings_df[listings_df['_id'] == lid].iloc[0]
+                        response_data.append({
+                            "_id": lid,
+                            "title": item_details['title'],
+                            "price": float(item_details['startPrice']),
+                            "image": "", # Placeholder, or fetch if in DF
+                            "score": 0 # Popular items don't have a specific score for this user
+                        })
+                    except IndexError:
+                        logger.warning(f"Popular listing {lid} not found in content_df.")
+            return jsonify(response_data)
+
+
         # Weights (Configurable)
         W_CONTENT = 0.4
         W_USER_CF = 0.3
@@ -356,11 +391,12 @@ def refresh_models():
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({"status": "healthy", "models_loaded": model_cache["last_updated"] > 0})
-
 if __name__ == '__main__':
-    # Initial build
+    # Determine debug mode based on environment variable
+    is_debug = os.getenv("NODE_ENV") != "production"
+
     print("Starting ML Service...")
-    # Run in thread to not block startup? No, we want it ready.
-    # But for dev, maybe just start.
-    # build_models() 
-    app.run(host='0.0.0.0', port=PORT, debug=True)
+    # Initial build (blocking for now, can be made async later if needed)
+    build_models() 
+    
+    app.run(debug=is_debug, port=PORT, host='0.0.0.0', use_reloader=is_debug, reloader_type='watchdog')

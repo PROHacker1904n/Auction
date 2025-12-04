@@ -36,15 +36,13 @@ COPY --from=frontend-build /app/frontend/build ../frontend/build
 # Environment Variables
 ENV NODE_ENV=production
 ENV PORT=5000
+ENV ML_SERVICE_URL=http://127.0.0.1:5001
 # Note: ATLASDB and JWT_SECRET must be provided at runtime (e.g., via Render Dashboard)
 
 # Expose port
 EXPOSE 5000
 
-# Create start script
-RUN echo "#!/bin/sh" > start.sh
-RUN echo "python3 ml-service/app.py &" >> start.sh
-RUN echo "node server.js" >> start.sh
+# Make start script executable
 RUN chmod +x start.sh
 
 # Run
