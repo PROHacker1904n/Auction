@@ -19,12 +19,28 @@ db = client['auction-app']
 bids_collection = db['bids']
 listings_collection = db['listings']
 
+def get_popular_listings(limit=5):
+    """
+    Fallback strategy: Fetch active listings sorted by bid count and view count.
+    """
+    try:
+        # Find listings that are active, sort by popularity (bids then views)
+        cursor = listings_collection.find(
+            {'status': 'active'}
+        ).sort([('bidCount', -1), ('viewCount', -1)]).limit(limit)
+        
+        return [str(doc['_id']) for doc in cursor]
+    except Exception as e:
+        app.logger.error(f"Error fetching popular listings: {e}")
+        return []
+
 def get_recommendations(user_id):
     # Get all bids from the database
     all_bids = list(bids_collection.find())
 
+    # If no bids exist in the entire system, return popular items
     if not all_bids:
-        return []
+        return get_popular_listings()
 
     # Create a DataFrame from the bids
     bids_df = pd.DataFrame(all_bids)
@@ -32,8 +48,9 @@ def get_recommendations(user_id):
     # Create the user-item matrix
     user_item_matrix = pd.crosstab(bids_df['bidder'], bids_df['listing'])
 
+    # If the user has no bidding history (Cold Start), return popular items
     if user_id not in user_item_matrix.index:
-        return []
+        return get_popular_listings()
 
     # Calculate the cosine similarity between items
     item_similarity = cosine_similarity(user_item_matrix.T)
@@ -48,7 +65,12 @@ def get_recommendations(user_id):
     # Find similar items
     similar_items = pd.Series(dtype=float)
     for item in user_bidded_items:
-        similar_items = pd.concat([similar_items, item_similarity_df[item]])
+        # Check if item exists in similarity matrix to be safe
+        if item in item_similarity_df.columns:
+            similar_items = pd.concat([similar_items, item_similarity_df[item]])
+
+    if similar_items.empty:
+        return get_popular_listings()
 
     # Sort the similar items by similarity score
     similar_items = similar_items.groupby(similar_items.index).sum()
@@ -56,6 +78,10 @@ def get_recommendations(user_id):
 
     # Get the top 5 recommended items
     recommended_items = [str(item_id) for item_id in similar_items.head(5).index.tolist()]
+    
+    # Final safety check
+    if not recommended_items:
+        return get_popular_listings()
 
     return recommended_items
 
@@ -67,17 +93,17 @@ def hello_world():
 def recommendations(user_id):
     try:
         # Convert user_id to the correct type if necessary (e.g., ObjectId)
-        # from bson.objectid import ObjectId
         user_id = ObjectId(user_id)
 
         recommendations = get_recommendations(user_id)
         return jsonify(recommendations)
     except Exception as e:
         app.logger.error(e)
-        return jsonify({'error': str(e)}), 500
+        # Fallback on error as well
+        return jsonify(get_popular_listings()), 200
 
 if __name__ == '__main__':
     # Determine debug mode based on environment variable
     is_debug = os.getenv("NODE_ENV") != "production"
 
-    app.run(debug=is_debug, port=5001, use_reloader=is_debug, reloader_type='watchdog')
+    app.run(debug=is_debug, port=5001, host='0.0.0.0', use_reloader=is_debug, reloader_type='watchdog')
