@@ -294,30 +294,47 @@ def get_collaborative_item_item(user_id, top_n=10):
 @app.route('/recommend/<user_id>', methods=['GET'])
 def recommend(user_id):
     try:
+        user_id = user_id.strip() # Clean input
+        logger.info(f"Received recommendation request for user_id: '{user_id}'")
+
         # Refresh if empty (first run)
         if model_cache["content_df"] is None:
+            logger.info("Model cache empty, building models...")
             build_models()
             
         # Cold Start: If user not in interaction matrix, return popular listings
-        if model_cache["user_item_matrix"] is None or user_id not in model_cache["user_item_matrix"].index:
-            logger.info(f"Cold start for user {user_id}. Returning popular listings.")
+        # Check both if matrix is None AND if user is in index
+        is_cold_start = False
+        if model_cache["user_item_matrix"] is None:
+             is_cold_start = True
+             logger.info("User item matrix is None. Treating as Cold Start.")
+        elif user_id not in model_cache["user_item_matrix"].index:
+             is_cold_start = True
+             logger.info(f"User {user_id} not found in interaction matrix. Treating as Cold Start.")
+
+        if is_cold_start:
             # Fetch details for popular listings
             popular_ids = get_popular_listings()
+            logger.info(f"Returning {len(popular_ids)} popular listings for cold start.")
+            
             response_data = []
             if popular_ids:
                 listings_df = model_cache["content_df"]
                 for lid in popular_ids:
                     try:
-                        item_details = listings_df[listings_df['_id'] == lid].iloc[0]
-                        response_data.append({
-                            "_id": lid,
-                            "title": item_details['title'],
-                            "price": float(item_details['startPrice']),
-                            "image": "", # Placeholder, or fetch if in DF
-                            "score": 0 # Popular items don't have a specific score for this user
-                        })
-                    except IndexError:
-                        logger.warning(f"Popular listing {lid} not found in content_df.")
+                        # Find item in content_df safely
+                        item_rows = listings_df[listings_df['_id'] == lid]
+                        if not item_rows.empty:
+                            item_details = item_rows.iloc[0]
+                            response_data.append({
+                                "_id": lid,
+                                "title": item_details['title'],
+                                "price": float(item_details['startPrice']),
+                                "image": "", 
+                                "score": 0 
+                            })
+                    except Exception as e:
+                        logger.warning(f"Error processing popular listing {lid}: {e}")
             return jsonify(response_data)
 
 
