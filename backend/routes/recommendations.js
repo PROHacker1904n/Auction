@@ -41,15 +41,35 @@ router.get('/:userId', async (req, res) => {
         .limit(8)
         .populate('seller', 'name rating');
       
-      // If not enough category items, fill with fallbacks
+      // If not enough category items, fill with fallbacks (Gender-based or Generic)
       if (recommendations.length < 8) {
          const excludeIds = [listingId, ...recommendations.map(r => r._id)].filter(Boolean);
-         const fillers = await getFallbackListings(8 - recommendations.length, excludeIds);
-         // getFallbackListings doesn't accept array for exclude, so let's simple fetch extra and filter in memory or adjust query
-         // For simplicity, just fetching popular ones ignoring duplicates check strictly for fill
-         const extra = await Listing.find({ status: 'active', _id: { $nin: excludeIds } })
-            .sort({ bidCount: -1 })
-            .limit(8 - recommendations.length)
+         const remainingCount = 8 - recommendations.length;
+
+         let fillQuery = { 
+             status: 'active', 
+             _id: { $nin: excludeIds } 
+         };
+
+         // Try to use Gender preference for the fill if user is logged in
+         if (userId && userId !== 'guest' && userId !== 'undefined' && userId !== 'null') {
+             try {
+                 const user = await User.findById(userId);
+                 if (user && (user.gender === 'male' || user.gender === 'female')) {
+                     fillQuery.$or = [
+                         { targetGender: user.gender },
+                         { targetGender: 'all' }
+                     ];
+                 }
+             } catch (err) {
+                 console.warn("Error fetching user for gender fallback:", err);
+                 // Continue with generic fillQuery
+             }
+         }
+         
+         const extra = await Listing.find(fillQuery)
+            .sort({ bidCount: -1, endTime: 1 })
+            .limit(remainingCount)
             .populate('seller', 'name rating');
          
          recommendations = [...recommendations, ...extra];
