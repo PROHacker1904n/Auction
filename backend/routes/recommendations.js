@@ -19,12 +19,13 @@ router.get('/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // 1. Handle Guest / No User
-    if (userId === 'guest' || userId === 'undefined' || userId === 'null') {
+    // 1. Handle Guest / No User (Used for everyone now as a temporary fix)
+    // if (userId === 'guest' || userId === 'undefined' || userId === 'null') {
        const fallback = await getFallbackListings();
        return res.json(fallback);
-    }
+    // }
 
+    /* 
     // 2. Call the Python ML service for logged-in users
     const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://127.0.0.1:5001';
     try {
@@ -65,6 +66,7 @@ router.get('/:userId', async (req, res) => {
         const fallback = await getFallbackListings();
         return res.json(fallback);
     }
+    */
 
   } catch (error) {
     console.error('Error getting recommendations:', error);
