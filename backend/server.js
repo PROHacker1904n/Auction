@@ -26,6 +26,7 @@ import userRoutes from "./routes/users.js";
 import recommendationsRoutes from "./routes/recommendations.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import fetch from "node-fetch";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -167,6 +168,22 @@ cron.schedule('* * * * *', async () => {
     }
   } catch (error) {
     console.error('Error updating auction statuses:', error);
+  }
+});
+
+// Cron job to refresh ML models every 2 hours
+cron.schedule('0 */2 * * *', async () => {
+  console.log('Triggering ML model refresh...');
+  const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://127.0.0.1:5001';
+  try {
+    const response = await fetch(`${mlServiceUrl}/refresh`, { method: 'POST' });
+    if (response.ok) {
+      console.log('ML model refresh triggered successfully.');
+    } else {
+      console.error(`Failed to trigger ML model refresh. Status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Error triggering ML model refresh:', error);
   }
 });
 

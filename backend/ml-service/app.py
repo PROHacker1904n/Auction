@@ -414,6 +414,9 @@ if __name__ == '__main__':
 
     print("Starting ML Service...")
     # Initial build (blocking for now, can be made async later if needed)
-    build_models() 
+    try:
+        build_models()
+    except Exception as e:
+        logger.error(f"Failed to build models on startup: {e}")
     
     app.run(debug=is_debug, port=PORT, host='0.0.0.0', use_reloader=is_debug, reloader_type='watchdog')
