@@ -78,7 +78,36 @@ router.get('/:userId', async (req, res) => {
       return res.json(recommendations);
     }
 
-    // 2. User-Based Recommendation (Gender)
+    // 2. ML Service-Based Recommendation
+    if (userId && userId !== 'guest' && userId !== 'undefined' && userId !== 'null') {
+        try {
+            const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://127.0.0.1:5001';
+            const mlResponse = await fetch(`${mlServiceUrl}/recommend/${userId}`);
+            
+            if (mlResponse.ok) {
+                const mlRecommendations = await mlResponse.json();
+                if (mlRecommendations && mlRecommendations.length > 0) {
+                    const listingIds = mlRecommendations.map(rec => rec._id);
+                    recommendations = await Listing.find({ _id: { $in: listingIds }, status: 'active' })
+                        .populate('seller', 'name rating');
+                    
+                    // Re-sort to match ML order
+                    recommendations.sort((a, b) => {
+                        return listingIds.indexOf(a._id.toString()) - listingIds.indexOf(b._id.toString());
+                    });
+
+                    if (recommendations.length > 0) {
+                        return res.json(recommendations);
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn("ML Service unreachable or error:", error.message);
+            // Fallback to basic logic
+        }
+    }
+
+    // 3. User-Based Recommendation (Gender-based Fallback)
     if (userId && userId !== 'guest' && userId !== 'undefined' && userId !== 'null') {
       const user = await User.findById(userId);
 

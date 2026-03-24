@@ -74,10 +74,10 @@ def fetch_data():
     Fetches data from MongoDB and prepares DataFrames.
     Returns: (interactions_df, listings_df)
     """
-    # 1. Fetch Listings (Products)
+    # 1. Fetch Listings (Products) - Include both active and ended for similarity context
     listings_cursor = db.listings.find(
-        {"status": "active"}, 
-        {"_id": 1, "title": 1, "description": 1, "category": 1, "condition": 1, "targetGender": 1, "startPrice": 1}
+        {"status": {"$in": ["active", "ended"]}}, 
+        {"_id": 1, "title": 1, "description": 1, "category": 1, "condition": 1, "targetGender": 1, "startPrice": 1, "status": 1}
     )
     listings = list(listings_cursor)
     listings_df = pd.DataFrame(listings)
@@ -383,15 +383,21 @@ def recommend(user_id):
         listings_df = model_cache["content_df"]
         response_data = []
         
+        # Filter for only active items in final recommendations
+        active_listings_df = listings_df[listings_df['status'] == 'active']
+        
         for rec in top_recs:
-            item_details = listings_df[listings_df['_id'] == rec['listing_id']].iloc[0]
-            response_data.append({
-                "_id": rec['listing_id'],
-                "title": item_details['title'],
-                "price": float(item_details['startPrice']),
-                "image": "", # Placeholder, or fetch if in DF
-                "score": rec['score']
-            })
+            # Check if recommended item is active
+            item_rows = active_listings_df[active_listings_df['_id'] == rec['listing_id']]
+            if not item_rows.empty:
+                item_details = item_rows.iloc[0]
+                response_data.append({
+                    "_id": rec['listing_id'],
+                    "title": item_details['title'],
+                    "price": float(item_details['startPrice']),
+                    "image": "", # Placeholder, or fetch if in DF
+                    "score": rec['score']
+                })
             
         return jsonify(response_data)
 

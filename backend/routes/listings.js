@@ -7,7 +7,7 @@ const router = express.Router();
 // Get all listings
 router.get("/", async (req, res) => {
   try {
-    const listings = await Listing.find({ status: 'active' })
+    const listings = await Listing.find({ status: { $in: ['active', 'ended', 'pending'] } })
       .populate("seller", "name")
       .populate("highestBidder", "name")
       .populate("winner", "name");
@@ -59,7 +59,7 @@ router.post("/", auth, async (req, res) => {
 // Get popular listings
 router.get("/popular", async (req, res) => {
   try {
-    const popularListings = await Listing.find({ status: 'active' })
+    const popularListings = await Listing.find({ status: { $in: ['active', 'ended'] } })
       .sort({ bidCount: -1 })
       .limit(5)
       .populate("seller", "name");
