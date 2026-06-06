@@ -3,15 +3,19 @@ import { useParams } from 'react-router-dom';
 import apiService from '../services/api';
 import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
+import { Input, Select, PrimaryButton } from '../styles/GlobalStyles';
+import { motion } from 'framer-motion';
 
 const ProfileContainer = styled.div`
   max-width: 1200px;
-  margin: 2rem auto;
-  padding: 2rem;
+  margin: 1rem auto 3rem;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 0.9fr 1.1fr;
   gap: 2rem;
-  background-color: #f5f5f5;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const LeftColumn = styled.div``;
@@ -19,89 +23,92 @@ const LeftColumn = styled.div``;
 const RightColumn = styled.div``;
 
 const Card = styled.div`
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  background: ${props => props.theme.backgroundCard};
+  border: 1px solid ${props => props.theme.border};
+  border-radius: 16px;
+  box-shadow: ${props => props.theme.shadow};
   margin-bottom: 2rem;
-  padding: 1.5rem;
+  padding: 2rem;
+  transition: all 0.3s ease;
 `;
 
 const CardTitle = styled.h2`
   font-size: 1.25rem;
-  font-weight: 500;
-  margin-bottom: 1rem;
-  color: #333;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin-bottom: 1.25rem;
+  color: ${props => props.theme.text};
 `;
 
 const FormGroup = styled.div`
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 `;
 
 const Label = styled.label`
   display: block;
-  font-size: 0.875rem;
-  color: #5f6368;
+  font-size: 0.825rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: ${props => props.theme.textSecondary};
   margin-bottom: 0.5rem;
 `;
 
-const Input = styled.input`
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #dadce0;
-  border-radius: 4px;
-  font-size: 1rem;
-  &:focus {
-    outline: none;
-    border-color: #1a73e8;
-  }
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #dadce0;
-  border-radius: 4px;
-  font-size: 1rem;
-  background-color: white;
-  &:focus {
-    outline: none;
-    border-color: #1a73e8;
-  }
-`;
-
-const Button = styled.button`
-  background-color: #1a73e8;
-  color: white;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  &:hover {
-    background-color: #185abc;
-  }
-`;
-
 const ProfileImageContainer = styled.div`
-  width: 120px;
-  height: 120px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #1a73e8;
+  background: linear-gradient(135deg, ${props => props.theme.primary} 0%, ${props => props.theme.accent} 100%);
   color: white;
-  font-size: 3rem;
+  font-size: 2.75rem;
+  font-weight: 800;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
 `;
 
 const ProfileImage = styled.img`
-  width: 120px;
-  height: 120px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
   object-fit: cover;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  border: 3px solid ${props => props.theme.primary};
+  box-shadow: ${props => props.theme.shadow};
+`;
+
+const HistoryList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+const HistoryItem = styled.li`
+  padding: 0.875rem 1.25rem;
+  background-color: ${props => props.theme.secondary}40;
+  border: 1px solid ${props => props.theme.border};
+  border-radius: 10px;
+  font-size: 0.9rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: ${props => props.theme.textSecondary};
+  font-weight: 500;
+
+  strong {
+    color: ${props => props.theme.text};
+    font-weight: 700;
+  }
+
+  span:last-child {
+    font-weight: 800;
+    color: ${props => props.theme.primary};
+  }
 `;
 
 const UserProfile = () => {
@@ -192,48 +199,61 @@ const UserProfile = () => {
     };
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--textSecondary)' }}>Loading...</div>;
     }
 
     if (!user) {
-        return <div>User not found</div>;
+        return <div style={{ textAlign: 'center', padding: '5rem', color: '#ef4444' }}>User not found</div>;
     }
 
     return (
-        <ProfileContainer>
+        <ProfileContainer
+          as={motion.div}
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
             <LeftColumn>
                 <Card>
-                    <CardTitle>Profile</CardTitle>
-                    {user.profileImage ? (
-                        <ProfileImage src={user.profileImage} alt={user.name} />
-                    ) : (
-                        <ProfileImageContainer>{user.name.charAt(0).toUpperCase()}</ProfileImageContainer>
-                    )}
-                    <h2>{user.name}</h2>
-                    <p>{user.email}</p>
+                    <CardTitle>Profile Details</CardTitle>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1rem' }}>
+                        {user.profileImage ? (
+                            <ProfileImage src={user.profileImage} alt={user.name} />
+                        ) : (
+                            <ProfileImageContainer>{user.name.charAt(0).toUpperCase()}</ProfileImageContainer>
+                        )}
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text)' }}>{user.name}</h2>
+                        <p style={{ color: 'var(--textSecondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>{user.email}</p>
+                    </div>
                 </Card>
                 <Card>
                     <CardTitle>My Bidding History</CardTitle>
                     {bids.length === 0 ? (
-                        <p>No bids yet.</p>
+                        <p style={{ color: 'var(--textSecondary)', fontStyle: 'italic', fontSize: '0.9rem' }}>No bids yet.</p>
                     ) : (
-                        <ul>
+                        <HistoryList>
                             {bids.map(bid => (
-                                <li key={bid._id}>{bid.listing.title} - ${bid.amount}</li>
+                                <HistoryItem key={bid._id}>
+                                    <strong>{bid.listing.title}</strong>
+                                    <span>₹{bid.amount.toLocaleString()}</span>
+                                </HistoryItem>
                             ))}
-                        </ul>
+                        </HistoryList>
                     )}
                 </Card>
                 <Card>
                     <CardTitle>Auctions Won</CardTitle>
                     {wonListings.length === 0 ? (
-                        <p>No auctions won yet.</p>
+                        <p style={{ color: 'var(--textSecondary)', fontStyle: 'italic', fontSize: '0.9rem' }}>No auctions won yet.</p>
                     ) : (
-                        <ul>
+                        <HistoryList>
                             {wonListings.map(listing => (
-                                <li key={listing._id}>{listing.title} - Winning Bid: ${listing.currentBid}</li>
+                                <HistoryItem key={listing._id}>
+                                    <strong>{listing.title}</strong>
+                                    <span>Winning Bid: ₹{listing.currentBid.toLocaleString()}</span>
+                                </HistoryItem>
                             ))}
-                        </ul>
+                        </HistoryList>
                     )}
                 </Card>
             </LeftColumn>
@@ -241,7 +261,7 @@ const UserProfile = () => {
                 {authUser && authUser._id === userId && (
                     <>
                         <Card>
-                            <CardTitle>User Information</CardTitle>
+                            <CardTitle>Update Information</CardTitle>
                             <form onSubmit={handleInfoSubmit}>
                                 <FormGroup>
                                     <Label>Gender</Label>
@@ -256,7 +276,7 @@ const UserProfile = () => {
                                     <Label>Graduation Year</Label>
                                     <Input type="number" name="graduationYear" value={infoForm.graduationYear} onChange={handleInfoChange} />
                                 </FormGroup>
-                                <Button type="submit">Save Information</Button>
+                                <PrimaryButton type="submit" style={{ width: '100%' }}>Save Information</PrimaryButton>
                             </form>
                         </Card>
 
@@ -265,9 +285,9 @@ const UserProfile = () => {
                             <form onSubmit={handlePictureSubmit}>
                                 <FormGroup>
                                     <Label>Upload new picture</Label>
-                                    <Input type="file" accept="image/*" onChange={handlePictureChange} />
+                                    <Input type="file" accept="image/*" onChange={handlePictureChange} style={{ border: 'none', padding: '0.25rem 0', background: 'none' }} />
                                 </FormGroup>
-                                <Button type="submit">Save Picture</Button>
+                                <PrimaryButton type="submit" style={{ width: '100%' }}>Save Picture</PrimaryButton>
                             </form>
                         </Card>
 
@@ -282,7 +302,7 @@ const UserProfile = () => {
                                     <Label>New Password</Label>
                                     <Input type="password" name="newPassword" value={passwordForm.newPassword} onChange={handlePasswordChange} />
                                 </FormGroup>
-                                <Button type="submit">Change Password</Button>
+                                <PrimaryButton type="submit" style={{ width: '100%' }}>Change Password</PrimaryButton>
                             </form>
                         </Card>
                     </>

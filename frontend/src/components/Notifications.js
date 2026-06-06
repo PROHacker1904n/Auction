@@ -2,64 +2,81 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import styled from 'styled-components';
+import { motion } from 'framer-motion';
 
 const NotificationsContainer = styled.div`
   max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
+  margin: 1rem auto 3rem;
+  background: ${props => props.theme.backgroundCard};
+  border: 1px solid ${props => props.theme.border};
+  border-radius: 20px;
+  box-shadow: ${props => props.theme.shadow};
+  padding: 2.5rem;
+  transition: all 0.3s ease;
 `;
 
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 2rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid ${props => props.theme.border};
 `;
 
 const Title = styled.h2`
-  color: #333;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: ${props => props.theme.text};
   margin: 0;
 `;
 
 const MarkAllReadButton = styled.button`
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  background: ${props => props.theme.primary}20;
+  color: ${props => props.theme.primary};
+  border: 1px solid ${props => props.theme.primary}40;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    background: #0056b3;
+    background: ${props => props.theme.primary};
+    color: white;
+    box-shadow: 0 4px 12px ${props => props.theme.primary}35;
+    transform: translateY(-1px);
   }
 `;
 
 const NotificationItem = styled.div`
-  background: ${props => props.isRead ? '#f8f9fa' : '#fff'};
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 12px;
+  background: ${props => props.isRead ? 'transparent' : `${props.theme.primary}08` };
+  border: 1px solid ${props => props.isRead ? props.theme.border : `${props.theme.primary}25` };
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
   position: relative;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: ${props => props.theme.shadow};
+    transform: translateY(-1px);
+    border-color: ${props => props.theme.primary}40;
   }
 `;
 
 const UnreadIndicator = styled.div`
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 1.25rem;
+  right: 1.25rem;
   width: 8px;
   height: 8px;
-  background: #007bff;
+  background: ${props => props.theme.accent};
   border-radius: 50%;
   display: ${props => props.isRead ? 'none' : 'block'};
+  box-shadow: 0 0 10px ${props => props.theme.accent};
 `;
 
 const NotificationHeader = styled.div`
@@ -71,19 +88,23 @@ const NotificationHeader = styled.div`
 
 const NotificationTitle = styled.h4`
   margin: 0;
-  color: #333;
-  font-size: 16px;
+  color: ${props => props.theme.text};
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 `;
 
 const NotificationTime = styled.span`
-  color: #666;
-  font-size: 12px;
+  color: ${props => props.theme.textSecondary};
+  font-size: 0.775rem;
+  font-weight: 500;
 `;
 
 const NotificationMessage = styled.p`
   margin: 0;
-  color: #666;
-  line-height: 1.4;
+  color: ${props => props.theme.textSecondary};
+  font-size: 0.9rem;
+  line-height: 1.5;
 `;
 
 const NotificationActions = styled.div`
@@ -93,23 +114,34 @@ const NotificationActions = styled.div`
 `;
 
 const ActionButton = styled.button`
-  background: ${props => props.primary ? '#007bff' : 'transparent'};
-  color: ${props => props.primary ? 'white' : '#007bff'};
-  border: 1px solid #007bff;
-  padding: 6px 12px;
-  border-radius: 4px;
+  background: ${props => props.primary ? props.theme.primary : 'transparent'};
+  color: ${props => props.primary ? 'white' : props.theme.textSecondary};
+  border: 1px solid ${props => props.primary ? 'transparent' : props.theme.border};
+  padding: 0.4rem 0.875rem;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    background: ${props => props.primary ? '#0056b3' : '#f8f9fa'};
+    background: ${props => props.primary ? props.theme.primaryHover : props.theme.secondaryHover};
+    color: ${props => props.primary ? 'white' : props.theme.text};
+    transform: translateY(-1px);
   }
 `;
 
 const EmptyState = styled.div`
   text-align: center;
-  padding: 40px 20px;
-  color: #666;
+  padding: 3rem 1.5rem;
+  color: ${props => props.theme.textSecondary};
+  font-size: 0.95rem;
+
+  h3 {
+    color: ${props => props.theme.text};
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+  }
 `;
 
 const LoadingSpinner = styled.div`
@@ -117,8 +149,9 @@ const LoadingSpinner = styled.div`
   justify-content: center;
   align-items: center;
   height: 200px;
-  font-size: 18px;
-  color: #666;
+  font-size: 0.95rem;
+  color: ${props => props.theme.textSecondary};
+  font-weight: 500;
 `;
 
 const Notifications = () => {
@@ -236,7 +269,12 @@ const Notifications = () => {
   }
 
   return (
-    <NotificationsContainer>
+    <NotificationsContainer
+      as={motion.div}
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <Header>
         <Title>
           Notifications {unreadCount > 0 && `(${unreadCount} unread)`}
@@ -256,7 +294,12 @@ const Notifications = () => {
       ) : (
         <>
           {notifications.map((notification) => (
-            <NotificationItem key={notification._id} isRead={notification.isRead}>
+            <NotificationItem 
+              as={motion.div}
+              layout
+              key={notification._id} 
+              isRead={notification.isRead}
+            >
               <UnreadIndicator isRead={notification.isRead} />
               <NotificationHeader>
                 <NotificationTitle>
@@ -271,7 +314,7 @@ const Notifications = () => {
               </NotificationMessage>
               <NotificationActions>
                 {!notification.isRead && (
-                  <ActionButton onClick={() => markAsRead(notification._id)}>
+                  <ActionButton primary onClick={() => markAsRead(notification._id)}>
                     Mark Read
                   </ActionButton>
                 )}

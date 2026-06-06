@@ -1,79 +1,21 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  FormContainer,
+  Form,
+  Input,
+  PrimaryButton,
+  SecondaryButton,
+  Message
+} from '../styles/GlobalStyles';
 
-const Container = styled.div`
-  max-width: 400px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`;
-
-const Title = styled.h2`
-  margin-bottom: 1.5rem;
-  text-align: center;
-  color: #333;
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const Input = styled.input`
-  padding: 0.8rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-
-  &:focus {
-    outline: none;
-    border-color: #007bff;
-  }
-`;
-
-const Button = styled.button`
-  padding: 0.8rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #0056b3;
-  }
-
-  &:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-`;
-
-const ErrorMessage = styled.div`
-  color: #dc3545;
-  text-align: center;
-  margin-top: 0.5rem;
-`;
-
-const SuccessMessage = styled.div`
-  color: #28a745;
-  text-align: center;
-  margin-top: 0.5rem;
-`;
-
-const StepIndicator = styled.div`
-  text-align: center;
-  margin-bottom: 1rem;
-  color: #666;
-  font-size: 0.9rem;
-`;
+const StepIndicator = ({ step }) => (
+  <div style={{ textAlign: 'center', marginBottom: '1.25rem', color: '#64748b', fontSize: '0.875rem', fontWeight: 600 }}>
+    Step {step} of 3
+  </div>
+);
 
 function ForgotPassword() {
   const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
@@ -164,80 +106,122 @@ function ForgotPassword() {
   };
 
   return (
-    <Container>
-      <Title>Reset Password</Title>
+    <FormContainer
+      as={motion.div}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+    >
+      <h2 style={{ marginBottom: '1.5rem', fontWeight: 800, letterSpacing: '-0.025em', textAlign: 'center' }}>Reset Password</h2>
       
-      {step === 1 && (
-        <Form onSubmit={handleEmailSubmit}>
-          <StepIndicator>Step 1 of 3: Enter your email</StepIndicator>
-          <Input
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Sending OTP...' : 'Send OTP'}
-          </Button>
-        </Form>
-      )}
-
-      {step === 2 && (
-        <Form onSubmit={handleOtpSubmit}>
-          <StepIndicator>Step 2 of 3: Verify OTP</StepIndicator>
-          <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
-            Sent to: <strong>{email}</strong>
-          </div>
-          <Input
-            type="text"
-            placeholder="Enter 6-digit OTP"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            required
-            maxLength="6"
-          />
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Verifying...' : 'Verify OTP'}
-          </Button>
-          <Button 
-            type="button" 
-            onClick={() => setStep(1)} 
-            style={{ backgroundColor: '#6c757d', marginTop: '0.5rem' }}
+      <AnimatePresence mode="wait">
+        {step === 1 && (
+          <motion.div
+            key="step1"
+            initial={{ opacity: 0, x: -15 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 15 }}
+            transition={{ duration: 0.25 }}
           >
-            Back to Email
-          </Button>
-        </Form>
-      )}
+            <Form onSubmit={handleEmailSubmit}>
+              <StepIndicator step={1} />
+              <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '0.5rem', textAlign: 'center' }}>
+                Enter your registered email address to receive a 6-digit OTP.
+              </div>
+              <Input
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <PrimaryButton type="submit" disabled={loading}>
+                {loading ? 'Sending OTP...' : 'Send OTP'}
+              </PrimaryButton>
+            </Form>
+          </motion.div>
+        )}
 
-      {step === 3 && (
-        <Form onSubmit={handlePasswordReset}>
-          <StepIndicator>Step 3 of 3: Set New Password</StepIndicator>
-          <Input
-            type="password"
-            placeholder="New Password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-            minLength="6"
-          />
-          <Input
-            type="password"
-            placeholder="Confirm New Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            minLength="6"
-          />
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Resetting...' : 'Reset Password'}
-          </Button>
-        </Form>
-      )}
+        {step === 2 && (
+          <motion.div
+            key="step2"
+            initial={{ opacity: 0, x: 15 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -15 }}
+            transition={{ duration: 0.25 }}
+          >
+            <Form onSubmit={handleOtpSubmit}>
+              <StepIndicator step={2} />
+              <div style={{ textAlign: 'center', marginBottom: '1rem', fontSize: '0.9rem', color: '#64748b' }}>
+                Sent to: <strong style={{ color: 'var(--text)' }}>{email}</strong>
+              </div>
+              <Input
+                type="text"
+                placeholder="Enter 6-digit OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                required
+                maxLength="6"
+              />
+              <PrimaryButton type="submit" disabled={loading}>
+                {loading ? 'Verifying...' : 'Verify OTP'}
+              </PrimaryButton>
+              <SecondaryButton 
+                type="button" 
+                onClick={() => setStep(1)} 
+                style={{ marginTop: '0.5rem' }}
+              >
+                Back to Email
+              </SecondaryButton>
+            </Form>
+          </motion.div>
+        )}
 
-      {error && <ErrorMessage>{error}</ErrorMessage>}
-      {success && <SuccessMessage>{success}</SuccessMessage>}
-    </Container>
+        {step === 3 && (
+          <motion.div
+            key="step3"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.25 }}
+          >
+            <Form onSubmit={handlePasswordReset}>
+              <StepIndicator step={3} />
+              <Input
+                type="password"
+                placeholder="New Password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                minLength="6"
+              />
+              <Input
+                type="password"
+                placeholder="Confirm New Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength="6"
+              />
+              <PrimaryButton type="submit" disabled={loading}>
+                {loading ? 'Resetting...' : 'Reset Password'}
+              </PrimaryButton>
+            </Form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {error && (
+        <Message style={{ color: '#991b1b', backgroundColor: '#fee2e2', border: '1px solid #f8717140' }}>
+          {error}
+        </Message>
+      )}
+      {success && (
+        <Message style={{ color: '#065f46', backgroundColor: '#d1fae5', border: '1px solid #34d39940' }}>
+          {success}
+        </Message>
+      )}
+    </FormContainer>
   );
 }
 

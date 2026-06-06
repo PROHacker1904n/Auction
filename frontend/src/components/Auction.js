@@ -3,30 +3,47 @@ import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/api';
 import styled from 'styled-components';
-import { Form, Input, Button, Message } from '../styles/GlobalStyles';
+import { Form, Input, PrimaryButton, Message } from '../styles/GlobalStyles';
 import Recommendations from './Recommendations';
+import { motion } from 'framer-motion';
 
 const AuctionContainer = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 3rem;
   max-width: 1200px;
-  margin: 0 auto;
-  background: #fff;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  margin: 1rem auto 2rem;
+  background: ${props => props.theme.backgroundCard};
+  border: 1px solid ${props => props.theme.border};
+  padding: 3rem;
+  border-radius: 24px;
+  box-shadow: ${props => props.theme.shadow};
+  position: relative;
+  transition: all 0.3s ease;
 
-  @media (max-width: 768px) {
+  @media (max-width: 968px) {
     grid-template-columns: 1fr;
+    gap: 2.5rem;
+    padding: 2rem;
   }
 `;
 
 const AuctionImageColumn = styled.div`
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid ${props => props.theme.border};
+  height: max-content;
+
   img {
     width: 100%;
-    border-radius: 8px;
+    display: block;
     object-fit: cover;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      transform: scale(1.02);
+    }
   }
 `;
 
@@ -36,138 +53,230 @@ const AuctionDetailsColumn = styled.div`
 `;
 
 const AuctionTitle = styled.h2`
-  font-size: 2rem;
-  font-weight: 600;
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
   margin-bottom: 1rem;
+  color: ${props => props.theme.text};
+  line-height: 1.15;
 `;
 
 const AuctionDescription = styled.p`
   font-size: 1rem;
   line-height: 1.6;
-  color: #555;
-  flex-grow: 1;
-  margin-bottom: 1.5rem;
+  color: ${props => props.theme.textSecondary};
+  margin-bottom: 2rem;
 `;
 
 const AuctionMeta = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  color: #777;
-  padding: 1rem 0;
-  border-top: 1px solid #eee;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: ${props => props.theme.textSecondary};
+  padding: 1.25rem 0;
+  border-top: 1px solid ${props => props.theme.border};
+  border-bottom: 1px solid ${props => props.theme.border};
+  margin-bottom: 2rem;
+
+  span {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  em {
+    font-style: normal;
+    font-weight: 600;
+    color: ${props => props.theme.text};
+  }
 `;
 
 const PriceBox = styled.div`
-  background-color: #f9f9f9;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  padding: 1rem;
+  background-color: ${props => props.theme.secondary};
+  border: 1px solid ${props => props.theme.border};
+  border-radius: 16px;
+  padding: 1.5rem;
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
 
   .price-label {
-    font-size: 1rem;
-    color: #555;
+    font-size: 0.825rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: ${props => props.theme.textSecondary};
     display: block;
     margin-bottom: 0.5rem;
   }
 
   .price-value {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #B12704;
+    font-size: 2.75rem;
+    font-weight: 800;
+    color: ${props => props.theme.primary};
     display: block;
+    letter-spacing: -0.03em;
   }
 
   .bidder-info {
-    font-size: 0.9rem;
-    color: #555;
-    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: ${props => props.theme.textSecondary};
+    margin-top: 0.75rem;
+    border-top: 1px solid ${props => props.theme.border}80;
+    padding-top: 0.75rem;
+
+    strong {
+      color: ${props => props.theme.text};
+      font-weight: 700;
+    }
   }
 `;
 
 const BidForm = styled(Form)`
   h3 {
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: ${props => props.theme.text};
   }
 `;
 
 const BidInputGroup = styled.div`
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 
   input {
     flex-grow: 1;
-    font-size: 1.1rem;
+    font-size: 1rem;
+    padding: 0.75rem 1.25rem;
   }
 
   button {
-    font-size: 1.1rem;
-    background-color: #f0c14b;
-    border: 1px solid #a88734;
-    color: #111;
-
-    &:hover {
-      background-color: #eab530;
-    }
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+    white-space: nowrap;
   }
 `;
 
 const OwnerNotice = styled.div`
-  background-color: #f9f9f9;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  padding: 1rem;
+  background-color: ${props => props.theme.secondary};
+  border: 1px solid ${props => props.theme.border};
+  border-radius: 12px;
+  padding: 1.25rem;
   text-align: center;
-  color: #555;
+  color: ${props => props.theme.textSecondary};
+  font-weight: 500;
+  
+  h3 {
+    color: ${props => props.theme.text};
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+  }
+
+  strong {
+    color: ${props => props.theme.text};
+  }
 `;
 
 const BidLogContainer = styled.div`
-  margin-top: 2rem;
+  grid-column: 1 / -1;
+  margin-top: 3rem;
+  border-top: 1px solid ${props => props.theme.border};
+  padding-top: 2rem;
+
   h3 {
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    margin-bottom: 1.25rem;
+    color: ${props => props.theme.text};
   }
 `;
 
 const BidLog = styled.ul`
   list-style: none;
   padding: 0;
-  max-height: 200px;
+  max-height: 250px;
   overflow-y: auto;
+  border: 1px solid ${props => props.theme.border};
+  border-radius: 12px;
+  background-color: ${props => props.theme.backgroundCard};
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: ${props => props.theme.border};
+    border-radius: 999px;
+  }
 `;
 
 const BidItem = styled.li`
   display: flex;
   justify-content: space-between;
-  padding: 0.5rem;
-  border-bottom: 1px solid #eee;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid ${props => props.theme.border};
+  font-size: 0.95rem;
+  transition: background-color 0.2s ease;
+
+  span:first-child {
+    font-weight: 600;
+    color: ${props => props.theme.text};
+  }
+
+  span:last-child {
+    font-weight: 800;
+    color: ${props => props.theme.primary};
+  }
+
+  &:hover {
+    background-color: ${props => props.theme.secondary}40;
+  }
 
   &.highest-bid {
-    background-color: #fff3cd;
+    background-color: ${props => props.theme.accent}12;
+    border-left: 4px solid ${props => props.theme.accent};
+    
+    span:last-child {
+      color: ${props => props.theme.accent};
+    }
+  }
+
+  &:last-child {
+    border-bottom: none;
   }
 `;
 
-const Timer = styled.div`
+const TimerOverlay = styled.div`
   position: absolute;
-  top: 1rem;
-  left: 1rem;
-  background-color: rgba(0, 0, 0, 0.5);
+  top: 1.25rem;
+  left: 1.25rem;
+  background-color: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(8px);
   color: white;
   padding: 0.5rem 1rem;
-  border-radius: 5px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  z-index: 10;
 `;
-
 
 const RecommendationsWrapper = styled.div`
   grid-column: 1 / -1;
+  margin-top: 3rem;
+  border-top: 1px solid ${props => props.theme.border};
+  padding-top: 2rem;
 `;
 
 const Auction = () => {
@@ -246,11 +355,11 @@ const Auction = () => {
   };
 
   if (loading) {
-    return <div>Loading auction...</div>;
+    return <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--textSecondary)' }}>Loading auction...</div>;
   }
 
   if (!listing) {
-    return <div>Listing not found.</div>;
+    return <div style={{ textAlign: 'center', padding: '5rem', color: '#ef4444' }}>Listing not found.</div>;
   }
 
   const isOwner = listing.seller && listing.seller._id === user?.id;
@@ -299,15 +408,15 @@ const Auction = () => {
             <BidInputGroup>
               <Input
                 type="number"
-                placeholder="Enter bid amount"
+                placeholder={`Min Bid: ₹${(listing.currentBid + 1).toLocaleString()}`}
                 value={bidAmount}
                 onChange={(e) => setBidAmount(e.target.value)}
                 min={listing.currentBid + 1}
                 required
               />
-              <Button type="submit" disabled={bidLoading}>
+              <PrimaryButton type="submit" disabled={bidLoading}>
                 {bidLoading ? 'Placing...' : 'Place Bid'}
-              </Button>
+              </PrimaryButton>
             </BidInputGroup>
           </BidForm>
         );
@@ -316,9 +425,18 @@ const Auction = () => {
   };
 
   return (
-    <AuctionContainer>
-      {timeLeft !== null && <Timer>{formatTime(timeLeft)}</Timer>}
+    <AuctionContainer
+      as={motion.div}
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <AuctionImageColumn>
+        {timeLeft !== null && (
+          <TimerOverlay>
+            ⏱️ {formatTime(timeLeft)}
+          </TimerOverlay>
+        )}
         <img src={listing.image} alt={listing.title} />
       </AuctionImageColumn>
       <AuctionDetailsColumn>
@@ -343,8 +461,9 @@ const Auction = () => {
         {renderBidSection()}
         {message && (
           <Message style={{ 
-            color: 'red',
-            backgroundColor: '#f8d7da'
+            color: '#991b1b',
+            backgroundColor: '#fee2e2',
+            border: '1px solid #f8717140'
           }}>
             {message}
           </Message>
@@ -352,14 +471,18 @@ const Auction = () => {
       </AuctionDetailsColumn>
       <BidLogContainer>
         <h3>Bid History</h3>
-        <BidLog>
-          {bids.map((bid, index) => (
-            <BidItem key={bid._id} className={index === 0 ? 'highest-bid' : ''}>
-              <span>{bid.bidder.name}</span>
-              <span>₹{bid.amount.toLocaleString()}</span>
-            </BidItem>
-          ))}
-        </BidLog>
+        {bids.length === 0 ? (
+          <p style={{ color: 'var(--textSecondary)', fontStyle: 'italic' }}>No bids placed yet.</p>
+        ) : (
+          <BidLog>
+            {bids.map((bid, index) => (
+              <BidItem key={bid._id} className={index === 0 ? 'highest-bid' : ''}>
+                <span>{bid.bidder.name}</span>
+                <span>₹{bid.amount.toLocaleString()}</span>
+              </BidItem>
+            ))}
+          </BidLog>
+        )}
       </BidLogContainer>
       
       <RecommendationsWrapper>
