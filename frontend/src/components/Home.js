@@ -5,9 +5,7 @@ import Recommendations from './Recommendations';
 import { motion } from 'framer-motion';
 
 const Hero = styled.section`
-  background: linear-gradient(135deg, ${props => props.theme.primary}20 0%, ${props => props.theme.accent}15 100%), 
-              url('https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=2000&auto=format&fit=crop') 
-              no-repeat center center/cover;
+  background: linear-gradient(135deg, ${props => props.theme.primary}12 0%, ${props => props.theme.accent}0a 100%);
   color: ${props => props.theme.text};
   text-align: center;
   padding: 8rem 2rem;
