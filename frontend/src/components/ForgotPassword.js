@@ -86,14 +86,28 @@ function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase().trim());
+  };
+
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
     setLoading(true);
 
+    const cleanEmail = email.trim();
+    if (!validateEmail(cleanEmail)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
+    setEmail(cleanEmail);
+
     try {
-      await api.forgotPassword(email);
+      await api.forgotPassword(cleanEmail);
       setSuccess('OTP sent successfully to your email');
       setTimeout(() => {
         setStep(2);

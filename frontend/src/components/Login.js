@@ -36,13 +36,25 @@ const Login = () => {
     });
   };
 
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase().trim());
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
 
+    const cleanEmail = formData.email.trim();
+    if (!validateEmail(cleanEmail)) {
+      setMessage('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await apiService.login(formData.email, formData.password);
+      const response = await apiService.login(cleanEmail, formData.password);
       login(response.user, response.token);
       navigate('/listings');
     } catch (error) {
@@ -57,8 +69,15 @@ const Login = () => {
     setLoading(true);
     setMessage('');
 
+    const cleanEmail = formData.email.trim();
+    if (!validateEmail(cleanEmail)) {
+      setMessage('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await apiService.register(formData.name, formData.email, formData.password, formData.gender, formData.urn, formData.graduationYear);
+      const response = await apiService.register(formData.name, cleanEmail, formData.password, formData.gender, formData.urn, formData.graduationYear);
       setMessage('Signup successful! Please login.');
       setIsLogin(true);
       setFormData({ name: '', email: '', password: '', gender: '', urn: '', graduationYear: '' });

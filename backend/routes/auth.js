@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 import PasswordReset from "../models/passwordReset.js";
 import { Resend } from 'resend'; // Import Resend
+import { validateEmail } from "../middleware/validation.js";
 
 const router = express.Router();
 
@@ -49,8 +50,15 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ message: "Please enter all fields" });
     }
 
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Validate email format
+    if (!validateEmail(cleanEmail)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
     // 2. Check for existing user
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: cleanEmail });
     if (existingUser) {
       return res.status(400).json({ message: "User with this email already exists" });
     }
@@ -61,7 +69,7 @@ router.post("/register", async (req, res) => {
     // 4. Create new user
     const newUser = new User({
       name,
-      email,
+      email: cleanEmail,
       password: hashedPassword,
       gender,
       urn,
@@ -88,7 +96,17 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    if (!email || !password) {
+      return res.status(400).json({ message: "Please enter email and password" });
+    }
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Validate email format
+    if (!validateEmail(cleanEmail)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    const user = await User.findOne({ email: cleanEmail });
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -105,7 +123,17 @@ router.post("/login", async (req, res) => {
 router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+    if (!email) {
+      return res.status(400).json({ message: "Please enter email" });
+    }
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Validate email format
+    if (!validateEmail(cleanEmail)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    const user = await User.findOne({ email: cleanEmail });
     if (!user) {
       return res.status(404).json({ message: "User with this email does not exist" });
     }
@@ -115,10 +143,10 @@ router.post("/forgot-password", async (req, res) => {
 
     // Save OTP to DB
     // First, clear any existing OTPs for this email
-    await PasswordReset.deleteMany({ email });
+    await PasswordReset.deleteMany({ email: cleanEmail });
     
     const newReset = new PasswordReset({
-      email,
+      email: cleanEmail,
       otp
     });
     await newReset.save();
@@ -144,8 +172,17 @@ router.post("/forgot-password", async (req, res) => {
 router.post("/verify-otp", async (req, res) => {
   try {
     const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Please enter email and OTP" });
+    }
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Validate email format
+    if (!validateEmail(cleanEmail)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
     
-    const resetRecord = await PasswordReset.findOne({ email, otp });
+    const resetRecord = await PasswordReset.findOne({ email: cleanEmail, otp });
     if (!resetRecord) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
@@ -160,9 +197,18 @@ router.post("/verify-otp", async (req, res) => {
 router.post("/reset-password", async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: "Please enter all fields" });
+    }
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Validate email format
+    if (!validateEmail(cleanEmail)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
 
     // Verify OTP again
-    const resetRecord = await PasswordReset.findOne({ email, otp });
+    const resetRecord = await PasswordReset.findOne({ email: cleanEmail, otp });
     if (!resetRecord) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
@@ -172,7 +218,7 @@ router.post("/reset-password", async (req, res) => {
 
     // Update User password
     const user = await User.findOneAndUpdate(
-      { email },
+      { email: cleanEmail },
       { password: hashedPassword }
     );
 

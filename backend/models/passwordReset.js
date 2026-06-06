@@ -3,7 +3,9 @@ import mongoose from 'mongoose';
 const passwordResetSchema = new mongoose.Schema({
   email: {
     type: String,
-    required: true
+    required: true,
+    lowercase: true,
+    trim: true
   },
   otp: {
     type: String,
